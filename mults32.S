@@ -10,43 +10,44 @@
 		;		Your code here
 		
 main
-		adr		R0, numbers
-		ldr		R1, [R0]			; multiplicand
-		ldr		R2, [R0, #4]		; multiplier
-		mov		R3, #0			; partial sum right
-		mov		R4, #0			; partial sum left
-		mov		R5, #32			; counter
-		b		docarry
+		adr		r0, numbers
+		ldr		r1, [r0]
+		ldr		r2, [r0, #4]
+		mov		r3, #0
+		mov		r4, #0
+		mov		r5, #0
+		b		loop
 		
-docarry
-		lsrs		R2, R2, #1
-		bcs		doadd
-		b		doshift
-		
-doadd
-		adds		R3, R3, R1
-		bvs		dosumleft
-		b		doshift
-		
-dosumleft
-		add		R4, R4, #1
-		;lsl		R4, R4, #1
+loop
+		tst		r2, #1
+		beq		doshift
+		adds		r4, r4, r1
+		adc		r5, r5, r3
 		b		doshift
 		
 doshift
-		lsl		R1, R1, #1
-		subs		R5, R5, #1
-		cmp		R5, #0
-		bne		docarry
-		b		movetomem
+		lsr		r2, r2, #1
+		lsls		r1, r1, #1
+		adc		R3, R3, #0
+		cmp		r2, #0
+		bgt		loop
+		adr		r0, result
+		str		r4, [r0]
+		adr		r0, carry
+		mov		r7, r5, lsr #31
+		tst		r7, #1
+		beq		doflip
 		
-movetomem
-		adr		R0, result
-		stmfa	R0, {R3, R4}
+doflip
+		mvn		r5, r5
+		add		r5, r5, #1
+		b		savetomem
+		
+savetomem
+		str		r5, [r0]
 		end
-
-		;10100000101111001111111100001101, 11111111111100001010110111101010
 		
-numbers	DCD		0xA0BCFF0D, 0xFFF0ADEA	
+numbers	DCD		0xA0BCFF0D, 0xFFF0ADEA
 result	FILL		8
 carry	FILL		4
+		
